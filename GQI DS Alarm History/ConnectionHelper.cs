@@ -18,7 +18,7 @@
 			{
 				var connection = ConnectionSettings.GetConnection("localhost", attributes);
 				connection.ClientApplicationName = APPLICATION_NAME;
-				connection.Authenticate("Barry", "eafaef4-f1eafFEaef");
+				connection.Authenticate("Barry", "XXX");
 				return connection;
 			}
 			catch (Exception ex)
