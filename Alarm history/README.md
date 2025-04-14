@@ -1,0 +1,1 @@
+# Technical Documentation for Alarm history

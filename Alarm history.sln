@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34701.34
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Alarm history", "Alarm history\Alarm history.csproj", "{ACC3487F-8A14-443E-966A-B2320697D1E0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Internal", "Internal", "{7C8679F9-F06F-41AF-AF4D-B5D3B4F37EF8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Code Analysis", "Code Analysis", "{DA19DE58-F495-40F8-96E2-18FEC696340D}"
+	ProjectSection(SolutionItems) = preProject
+		Internal\Code Analysis\qaction-debug.ruleset = Internal\Code Analysis\qaction-debug.ruleset
+		Internal\Code Analysis\qaction-release.ruleset = Internal\Code Analysis\qaction-release.ruleset
+		Internal\Code Analysis\stylecop.json = Internal\Code Analysis\stylecop.json
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GQI DS Alarm History", "GQI DS Alarm History\GQI DS Alarm History.csproj", "{AAEDE9D3-42F1-485C-B24A-46E391EF2BE8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ACC3487F-8A14-443E-966A-B2320697D1E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACC3487F-8A14-443E-966A-B2320697D1E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACC3487F-8A14-443E-966A-B2320697D1E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACC3487F-8A14-443E-966A-B2320697D1E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AAEDE9D3-42F1-485C-B24A-46E391EF2BE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAEDE9D3-42F1-485C-B24A-46E391EF2BE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AAEDE9D3-42F1-485C-B24A-46E391EF2BE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AAEDE9D3-42F1-485C-B24A-46E391EF2BE8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DA19DE58-F495-40F8-96E2-18FEC696340D} = {7C8679F9-F06F-41AF-AF4D-B5D3B4F37EF8}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5ED35B2D-EDE0-43F7-A2CF-21DCA98A7693}
+	EndGlobalSection
+EndGlobal
