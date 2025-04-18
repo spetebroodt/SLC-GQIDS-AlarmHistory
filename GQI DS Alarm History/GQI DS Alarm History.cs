@@ -184,15 +184,15 @@ namespace GQIDSAlarmHistory
 
 		private FilterElement<Alarm> CreateFilter()
 		{
-			var filter = AlarmExposers.TimeOfArrival.GreaterThanOrEqual(_from);
+			FilterElement<Alarm> filter = AlarmExposers.TimeOfArrival.GreaterThanOrEqual(_from);
 			if (_until == default(DateTime))
 			{
 				_logger.Information($"Fetching alarm history from {_from.ToLongTimeString()} onwards.");
 			}
 			else
 			{
-				filter.AND(AlarmExposers.TimeOfArrival.LessThan(_until));
-				_logger.Information($"Fetching alarm history from {_from.ToLongTimeString()} until {_until.ToLongTimeString()}.");
+				filter = filter.AND(AlarmExposers.TimeOfArrival.LessThan(_until));
+				_logger.Information($"Fetching alarm history from {_from.ToString("F")} until {_until.ToString("F")}.");
 			}
 
 			return filter;
