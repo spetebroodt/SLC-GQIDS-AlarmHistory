@@ -63,6 +63,8 @@ using SLDataGateway.API.Repositories.Extensions;
 using System.Collections.Generic;
 using System.Linq;
 using GQI_DS_Alarm_History;
+using SLDataGateway.API.Requests.Queries.Abstract;
+using SLDataGateway.API.Types.Paging;
 
 namespace GQIDSAlarmHistory
 {
@@ -84,9 +86,10 @@ namespace GQIDSAlarmHistory
 		private IGQILogger _logger;
 		private DateTime _from;
 		private DateTime _until;
-		private IEnumerable<Alarm> _alarms;
 		private IDatabaseRepositoryRegistry _registry;
 		private IAlarmRepository _repository;
+		private IDatabaseQuery<Alarm> _query;
+		private DisposablePagingCookie _previousCookie = null;
 
 		public OnInitOutputArgs OnInit(OnInitInputArgs args)
 		{
@@ -133,20 +136,33 @@ namespace GQIDSAlarmHistory
 			var filter = CreateFilter();
 
 			var query = filter.Limit(1_000_000)
-				.OrderByDescending(AlarmExposers.TimeOfArrival)
-				.WithExecutionOptions(options => options.WithTargetHop(QueryTargetHopOptions.All));
+				.OrderByDescending(AlarmExposers.TimeOfArrival);
 
-			_alarms = _repository.CreateReadQuery(query).SetTimeout(120_000).SetPageSize(10_000).Execute();
+			_query = _repository.CreateReadQuery(query)
+				.SetTimeout(120_000)
+				.SetPageSize(10_000)
+				.SetAutoPage(false);
+
 			return default;
 		}
 
 		public GQIPage GetNextPage(GetNextPageInputArgs args)
 		{
 			_logger.Information($"Read next page.");
-			var rows = _alarms.Take(1_000).Select(CreateRow).ToArray();
+
+			if (_previousCookie != null)
+			{
+				_query.SetPagingCookie(new DisposablePagingCookie(_previousCookie.GUID));
+				_previousCookie.Dispose();
+			}
+
+			var alarmPage = _query.ExecutePaged();
+			_previousCookie = alarmPage.PagingCookie as DisposablePagingCookie;
+
+			var rows = alarmPage.Select(CreateRow).ToArray();
 			return new GQIPage(rows)
 			{
-				HasNextPage = rows.Length == 1000,
+				HasNextPage = rows.Length > 0,
 			};
 		}
 
