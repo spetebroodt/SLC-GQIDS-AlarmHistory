@@ -49,43 +49,38 @@ DATE		VERSION		AUTHOR			COMMENTS
 ****************************************************************************
 */
 
-using System;
-using Skyline.DataMiner.Analytics.GenericInterface;
-using Skyline.DataMiner.Net;
-using Skyline.DataMiner.Net.Messages.SLDataGateway;
-using SLDataGateway.API.Querying;
-using SLDataGateway.API.Repositories.CustomDataTableConfiguration;
-using SLDataGateway.API.Repositories.Registry;
-using SLDataGateway.API.Types.Repositories;
-using SLDataGateway.API.Querying.ExecutionOptions.TargetHopOptions;
-using SLDataGateway.API.Querying.ExecutionOptions;
-using SLDataGateway.API.Repositories.Extensions;
-using System.Collections.Generic;
-using System.Linq;
-using GQI_DS_Alarm_History;
-using SLDataGateway.API.Requests.Queries.Abstract;
-using SLDataGateway.API.Types.Paging;
-
 namespace GQIDSAlarmHistory
 {
+	using System;
+	using System.Linq;
+	using Skyline.DataMiner.Analytics.GenericInterface;
+	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using SLDataGateway.API.Querying;
+	using SLDataGateway.API.Repositories.CustomDataTableConfiguration;
+	using SLDataGateway.API.Repositories.Extensions;
+	using SLDataGateway.API.Repositories.Registry;
+	using SLDataGateway.API.Requests.Queries.Abstract;
+	using SLDataGateway.API.Types.Paging;
+	using SLDataGateway.API.Types.Repositories;
+
 	/// <summary>
 	/// Represents a data source.
 	/// See: https://aka.dataminer.services/gqi-external-data-source for a complete example.
 	/// </summary>
-	[GQIMetaData(Name = "GQI DS Alarm History")]
-	public sealed class GQIDSAlarmHistory : IGQIDataSource
-		, IGQIOnInit
-		, IGQIInputArguments
-		, IGQIOnPrepareFetch
-		, IGQIOnDestroy
+	[GQIMetaData(Name = "History alarms")]
+	public sealed class GQIDSHistoryAlarms : IGQIDataSource, IGQIOnInit, IGQIInputArguments, IGQIOnPrepareFetch, IGQIOnDestroy
 	{
 		private static readonly GQIDateTimeArgument _fromArg = new GQIDateTimeArgument("From") { IsRequired = true };
 		private static readonly GQIDateTimeArgument _untilArg = new GQIDateTimeArgument("Until") { IsRequired = false };
+		private static readonly GQIStringArgument _searchTermArg = new GQIStringArgument("Search term") { IsRequired = false };
 
+		private GQIDMS _dms;
 		private IConnection _connection;
 		private IGQILogger _logger;
 		private DateTime _from;
 		private DateTime _until;
+		private string _searchTerm;
 		private IDatabaseRepositoryRegistry _registry;
 		private IAlarmRepository _repository;
 		private IDatabaseQuery<Alarm> _query;
@@ -94,6 +89,7 @@ namespace GQIDSAlarmHistory
 		public OnInitOutputArgs OnInit(OnInitInputArgs args)
 		{
 			_logger = args.Logger;
+			_dms = args.DMS;
 			return default;
 		}
 
@@ -103,6 +99,7 @@ namespace GQIDSAlarmHistory
 			{
 				_fromArg,
 				_untilArg,
+				_searchTermArg,
 			};
 		}
 
@@ -110,6 +107,7 @@ namespace GQIDSAlarmHistory
 		{
 			_from = args.GetArgumentValue(_fromArg);
 			args.TryGetArgumentValue(_untilArg, out _until);
+			args.TryGetArgumentValue(_searchTermArg, out _searchTerm);
 
 			return default;
 		}
@@ -118,18 +116,19 @@ namespace GQIDSAlarmHistory
 		{
 			return new GQIColumn[]
 			{
-				new GQIStringColumn("Root ID"),
-				new GQIStringColumn("ID"),
-				new GQIStringColumn("Value"),
+				new GQIStringColumn("Severity"),
 				new GQIStringColumn("Element"),
 				new GQIStringColumn("Parameter"),
+				new GQIStringColumn("Value"),
 				new GQIDateTimeColumn("Time"),
+				new GQIStringColumn("Root ID"),
+				new GQIStringColumn("ID"),
 			};
 		}
 
 		public OnPrepareFetchOutputArgs OnPrepareFetch(OnPrepareFetchInputArgs args)
 		{
-			_connection = ConnectionHelper.CreateConnection();
+			_connection = _dms.GetConnection();
 			_registry = CreateRegistry(_connection);
 			_repository = CreateRepository(_registry);
 
@@ -148,7 +147,7 @@ namespace GQIDSAlarmHistory
 
 		public GQIPage GetNextPage(GetNextPageInputArgs args)
 		{
-			_logger.Information($"Read next page.");
+			_logger.Debug($"Read next page.");
 
 			if (_previousCookie != null)
 			{
@@ -176,11 +175,20 @@ namespace GQIDSAlarmHistory
 
 		private IDatabaseRepositoryRegistry CreateRegistry(IConnection connection)
 		{
-			var registry = DatabaseRepositoryRegistry
-					.Builder?
-					.WithConnection(connection)?
-					.WithCustomDataTableConfiguration(CustomDataTableConfiguration.Global)?
-					.Build();
+			IDatabaseRepositoryRegistry registry = null;
+			try
+			{
+				registry = DatabaseRepositoryRegistry
+						.Builder?
+						.WithConnection(connection)?
+						.WithCustomDataTableConfiguration(CustomDataTableConfiguration.Global)?
+						.Build();
+			}
+			catch (Exception ex)
+			{
+				_logger.Error($"Error creating repository registry: {ex.Message}");
+				throw new GenIfException($"Could not create repository registry. Exception '{ex.Message} - {ex.StackTrace} - {ex.InnerException}'.");
+			}
 
 			if (registry == null)
 				throw new GenIfException("Could not create repository registry.");
@@ -211,6 +219,13 @@ namespace GQIDSAlarmHistory
 				_logger.Information($"Fetching alarm history from {_from.ToString("F")} until {_until.ToString("F")}.");
 			}
 
+			if (!string.IsNullOrWhiteSpace(_searchTerm))
+			{
+				filter = filter.AND(AlarmExposers.ElementName.Contains(_searchTerm)
+					.OR(AlarmExposers.ParameterName.Contains(_searchTerm))
+					.OR(AlarmExposers.Value.Contains(_searchTerm)));
+			}
+
 			return filter;
 		}
 
@@ -218,12 +233,13 @@ namespace GQIDSAlarmHistory
 		{
 			return new GQIRow(new GQICell[]
 			{
-				new GQICell() { Value = alarm.TreeID.ToString() }, // new GQIStringColumn("Root ID"),
-				new GQICell() { Value = alarm.AlarmID.ToString() }, // new GQIStringColumn("ID"),
-				new GQICell() { Value = alarm.Value }, // new GQIStringColumn("Value"),
-				new GQICell() { Value = alarm.ElementName }, // new GQIStringColumn("Element"),
-				new GQICell() { Value = alarm.ParameterName }, // new GQIStringColumn("Parameter"),
-				new GQICell() { Value = alarm.CreationTime.ToUniversalTime() }, // new GQIStringColumn("Parameter"),
+				new GQICell() { Value = alarm.Severity }, // "Severity"
+				new GQICell() { Value = alarm.ElementName }, // "Element"
+				new GQICell() { Value = alarm.ParameterName }, // "Parameter"
+				new GQICell() { Value = alarm.Value }, // "Value"
+				new GQICell() { Value = alarm.TimeOfArrival.ToUniversalTime() }, // "Time"
+				new GQICell() { Value = alarm.TreeID.ToString() }, // "Root ID"
+				new GQICell() { Value = alarm.AlarmID.ToString() }, // "ID"
 			});
 		}
 	}
