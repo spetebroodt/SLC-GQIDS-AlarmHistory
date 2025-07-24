@@ -6,26 +6,23 @@ The **History Alarms Data Source** enables users to efficiently retrieve and ana
 
 ## Key Features
 
-- **Time Range Filtering:** Specify a required start time (`From`) and an optional end time (`Until`) to focus on alarms within a particular period.
-- **Search Functionality:** Filter alarms by a search term that matches the element name, parameter name, or value.
-- **Efficient Paging:** Handles large alarm sets with server-side paging for optimal performance and scalability.
+- **Time range filtering**: Specify a required start time (`From`) and an optional end time (`Until`) to only retrieve alarms within a particular period.
+- **Search functionality**: Filter alarms by specifying a search term that matches the element name, parameter name, or parameter value.
+- **Efficient paging**: Handles large alarm sets with server-side paging for optimal performance and scalability.
 
-## Use Cases
+## Input & Output
 
-- **Incident Analysis:** Quickly access all alarms that occurred during a specific incident window.
-- **Root Cause Investigation:** Search for alarms related to specific elements, parameters, or values to support troubleshooting.
-- **Historical Reporting:** Generate reports on alarm trends and patterns over custom time ranges.
-- **Compliance Auditing:** Review alarm history for auditing and regulatory compliance purposes.
+### Input
 
-![Sample dashboard highlighting alarm filtering and search](./Images/dashboard.png)
+Arguments:
 
-## Input Arguments
+- **From** (`DateTime`, required): Start of the time range.
+- **Until** (`DateTime`, optional): End of the time range.
+- **Search term** (`String`, optional): Text to be searched in element names, parameter names, or parameter values.
 
-- **From** (`DateTime`, required): Start of the time range for alarm retrieval.
-- **Until** (`DateTime`, optional): End of the time range for alarm retrieval.
-- **Search term** (`String`, optional): Text to search within element name, parameter name, or value.
+### Output
 
-## Output Columns
+Columns:
 
 - **Severity**
 - **Element**
@@ -35,11 +32,15 @@ The **History Alarms Data Source** enables users to efficiently retrieve and ana
 - **Root ID**
 - **ID**
 
+## Use Cases
+
+- **Incident analysis**: Quickly retrieve all alarms that occurred during a specific incident window.
+- **Root cause investigation**: Search for alarms related to specific elements, parameters, or parameter values for troubleshooting purposes.
+- **Historical reporting**: Generate reports on alarm trends and patterns over custom time ranges.
+- **Compliance auditing**: Review alarm history for auditing and regulatory compliance purposes.
+
+![Sample dashboard highlighting alarm filtering and search](./Images/dashboard.png)
+
 ## Prerequisites
 
 - DataMiner System without GQI DxM (DxM support is currently under development)
-
-## Technical Reference
-
-Source code available at: [https://github.com/SkylineCommunications/SLC-GQIDS-AlarmHistory](https://github.com/SkylineCommunications/SLC-GQIDS-AlarmHistory)
-
